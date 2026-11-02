@@ -9,6 +9,7 @@ Design
   - Hub screens: every crop x every baseline vs ours. Each judged twice (pass A and pass B).
   - Baseline-only screens: random crop, random pair of baselines. Judged once.
   - Gold screens: 3 per rater, one broken overlay vs a real overlay of the same crop.
+  - Human-assisted screens: every crop in ha/ (ours vs hand-corrected ours), once per rater.
   - Blocks of BLOCK real screens + GOLD_PER_BLOCK gold screens, one block per rater.
 The output never says which method is "ours".
 """
@@ -61,6 +62,12 @@ for kind in ("empty", "shift", "blobs"):
         gold.append((kind, c))
 assert len(gold) == GOLD_PER_BLOCK, f"expected {GOLD_PER_BLOCK} gold files, found {len(gold)}"
 
+ha = pngs("ha") if os.path.isdir(os.path.join(ROOT, "ha")) else []
+for c in ha:
+    assert c in crops, f"ha/{c}{EXT} is not one of the raw crops"
+if ha:
+    assert ext_of("ha") == EXT, "ha/ uses a different extension than raw/"
+
 def make(crop, a, b, kind):
     left, right = (a, b) if random.random() < 0.5 else (b, a)
     return {"crop": crop, "left": left, "right": right, "type": kind}
@@ -82,13 +89,16 @@ for blk in blocks:
         g = make(crop, real, f"gold_{kind}", "gold")
         pos = random.randint(3, len(blk))
         blk.insert(pos, g)
+    for c in ha:
+        pos = random.randint(3, len(blk))
+        blk.insert(pos, make(c, OURS, "ha", "ha"))
 
-out = {"ext": EXT, "block_size": BLOCK, "gold_per_block": GOLD_PER_BLOCK, "n_blocks": len(blocks), "blocks": blocks}
+out = {"ext": EXT, "block_size": BLOCK, "gold_per_block": GOLD_PER_BLOCK, "ha_per_block": len(ha), "n_blocks": len(blocks), "blocks": blocks}
 with open(os.path.join(ROOT, "schedule.json"), "w") as f:
     json.dump(out, f, separators=(",", ":"))
 
 # ---- summary ----
-real = [s for blk in blocks for s in blk if s["type"] != "gold"]
+real = [s for blk in blocks for s in blk if s["type"] in ("hub", "bo")]
 appear = Counter(); left = Counter(); pair = Counter(); per_crop = Counter()
 for s in real:
     appear[s["left"]] += 1; appear[s["right"]] += 1; left[s["left"]] += 1
@@ -98,7 +108,8 @@ for s in real:
 print(f"image extension {EXT}")
 print(f"crops {len(crops)}  methods {len(methods)}  ours {OURS}  baselines {len(baselines)}")
 print(f"hub screens {len(hub)} x2 = {2*len(hub)}, baseline-only {BASELINE_ONLY}, total real {len(real)}")
-print(f"blocks (raters) {len(blocks)}, each {BLOCK} real + {GOLD_PER_BLOCK} gold")
+print(f"blocks (raters) {len(blocks)}, each {BLOCK} real + {GOLD_PER_BLOCK} gold + {len(ha)} human-assisted = {BLOCK + GOLD_PER_BLOCK + len(ha)} screens")
+print(f"human-assisted crops: {ha}")
 print("\nmethod  appearances  on-left")
 for m in methods:
     print(f"{m:6}  {appear[m]:11}  {left[m]:7}")
