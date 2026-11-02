@@ -212,7 +212,7 @@
     countEl.textContent = `${i + 1} / ${screens.length}`;
     progEl.style.width = `${(i / screens.length) * 100}%`;
     main.innerHTML = `
-      <div class="prompt" id="prompt">Which side fits the trees better?</div>
+      <div class="prompt" id="prompt">Which side has more accurate outlines of the observed trees?</div>
       <div class="row">
         <div class="panel" id="pL"><span class="tag">Left</span><img src="${imgPath(s.left, s.crop)}" alt=""></div>
         <div class="panel"><span class="tag">Photo</span><img src="${rawPath(s.crop)}" alt=""></div>
