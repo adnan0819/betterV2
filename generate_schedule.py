@@ -17,7 +17,7 @@ import json, os, random, sys
 from collections import Counter
 
 SEED = 20261028
-BLOCK = 40
+BLOCK = 32
 GOLD_PER_BLOCK = 3
 BASELINE_ONLY = 400
 ROOT = os.path.dirname(os.path.abspath(__file__))
